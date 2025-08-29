@@ -2,7 +2,7 @@ from consumer import run_consumer
 from producer import run_producer
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -22,6 +22,10 @@ def adjust_count(topic, col, key, ammount=-1):
     run_producer(topic, items)
 
 
-if __name__ == "__main__":
-    adjust_count("inventory", "inventory", "A1")
-    # adjust_count("bank", "count", "$1", -1)
+def zero_all_currency():
+    items = run_consumer("bank")
+
+    for currency in items["bank"].keys():
+        items["bank"][currency] = 0
+
+    run_producer("bank", items)

@@ -19,15 +19,9 @@ def run_consumer(topic):
                 "value": msg.value.decode("utf-8") if msg.value else None,
             }
             ret[serialized["key"]] = json.loads(serialized["value"])
-            print(ret)
     except KeyboardInterrupt:
         print("Consumer interrupted. Exiting...")
     finally:
         consumer.close()
-        print("Consumer closed.")
 
     return ret
-
-
-if __name__ == "__main__":
-    print(run_consumer("inventory"))
