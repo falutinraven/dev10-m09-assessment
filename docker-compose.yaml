@@ -1,0 +1,56 @@
+services:
+  # airflow:
+  #   image: apache/airflow:latest
+  #   container_name: airflow
+  #   hostname: airflow
+  #   command: airflow standalone
+  #   ports:
+  #     - 8080:8080 # Airflow Web UI
+  #   volumes:
+  #     - ./dags:/opt/airflow/dags
+
+  # api:
+  #   build: ./api
+  #   container_name: api
+  #   hostname: api
+  #   ports:
+  #     - 8081:8080 # Spark Web UI
+  #     - 7077:7077 # Spark leader port
+  #   volumes:
+  #     - ./work-dir:/opt/spark/work-dir
+  #     - ./output:/opt/spark/files/out
+  #     - ./input:/opt/spark/files/in
+  #     - ./conf:/opt/spark/conf
+
+  broker:  # Name of container
+    image: apache/kafka:latest #This tells Docker to download the latest official Kafka software image.
+    container_name: broker 
+    hostname: broker #giving name so that container in same network can communicate with that name
+    ports:
+      - 29092:29092 #This is like giving the container a public address. It maps port 29092 on your computer to port 29092 inside the container, allowing you to connect to Kafka from outside the container.
+
+    environment:
+      KAFKA_NODE_ID: 1 #a unique identifier
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: EXTERNAL://0.0.0.0:29092,INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:29092,INTERNAL://broker:9092 #
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+
+  # python:
+  #   build: ./python #build an image for the Python container using the Dockerfile located in the ./python directory. This Dockerfile likely contains instructions on how to set up a Python environment with the necessary librarie
+  #   container_name: python
+  #   hostname: python
+  #   volumes: #This is an important step. It creates a link between a folder on your local computer (./scripts) and a folder inside the container (/home/app). This means any scripts you write on your computer (like producer.py and consumer.py) will automatically appear inside the container, and you can edit them from your computer.
+  #     - ./scripts:/home/app
+  #   working_dir: /home/app #This sets the default directory inside the container to /home/app. This is why the commands for running your scripts (like python producer.py) don't need a full path.
+  #   command: sleep infinity #This is a common trick used in prototype Docker setups. It starts the container and keeps it running indefinitely without exiting, so you can manually enter it and run commands.
+  #   depends_on: #his tells Docker to make sure the broker container (your Kafka server) is running and healthy before it starts the python container. This ensures that your Python scripts can connect to Kafka as soon as they start.
+  #     - broker
